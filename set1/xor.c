@@ -1,23 +1,10 @@
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
 #include <stdio.h>
 
-
 #include "utils.h"
-
-void 
-xor(uint8_t *in1, uint8_t *in2, int len, uint8_t **out)
-{
-  *out = calloc(len, sizeof(uint8_t));
-
-  for (int i = 0; i < len; i++)
-  {
-    (*out)[i] = in1[i] ^ in2[i];
-  }
-}
 
 int
 main(int argc, char *argv[])

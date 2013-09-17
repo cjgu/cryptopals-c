@@ -124,3 +124,14 @@ encode_b64(uint8_t *bytes, int len)
 
   return b64;
 }
+
+void
+xor(uint8_t *in1, uint8_t *in2, int len, uint8_t **out)
+{
+  *out = calloc(len, sizeof(uint8_t));
+
+  for (int i = 0; i < len; i++)
+  {
+    (*out)[i] = in1[i] ^ in2[i];
+  }
+}
