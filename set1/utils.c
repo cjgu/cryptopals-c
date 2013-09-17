@@ -48,13 +48,13 @@ decode_hex(char *hex_str, uint8_t **bytes)
 static char hex_map[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
 
 char *
-encode_hex(uint8_t bytes[], int len)
+encode_hex(uint8_t *bytes, int len)
 {
   char *hex_str = calloc(len*2, sizeof(char));
   for (int i = 0; i < len; i++)
   {
      hex_str[2*i] = hex_map[(bytes[i] & 0xF0) >> 4];
-     hex_str[2*i+1] = hex_str[(bytes[i] & 0x0F)];
+     hex_str[2*i+1] = hex_map[(bytes[i] & 0x0F)];
   }
   return hex_str;
 }
