@@ -189,7 +189,7 @@ search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text)
   // Find highest scoring plaintext
   uint8_t max_index = 0;
   int max = 0;
-  for (uint8_t i; i < 0xFF; i++)
+  for (uint8_t i = 0; i < 0xFF; i++)
   {
     if(plain_text_scores[i] > max){
       max = plain_text_scores[i];
