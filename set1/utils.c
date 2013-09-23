@@ -169,15 +169,15 @@ fill_key(uint8_t key_char, uint8_t *key, int len)
 /*
  * Returns highest scoring plaintext
  */
-uint8_t *
-search_single_char_xor_key(uint8_t *crypto_text, int len)
+int
+search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text)
 {
   uint8_t *key = calloc(len, sizeof(uint8_t));
 
   uint8_t *plain_texts[0xFF];
   int *plain_text_scores = calloc(0xFF, sizeof(int));
 
-  for (uint8_t key_char = 'A'; key_char <= 'Z'; key_char++)
+  for (uint8_t key_char = 0; key_char < 0xFF; key_char++)
   {
     fill_key(key_char, key, len);
 
@@ -197,13 +197,15 @@ search_single_char_xor_key(uint8_t *crypto_text, int len)
     }
   }
 
-  printf("Highest scoring plaintext: '%s'. Key 0x%X=%c\n", plain_texts[max_index], max_index, max_index);
-
+  (*plain_text) = plain_texts[max_index];
   for (uint8_t i = 'A'; i <= 'Z'; i++){
     if (i != max_index){
       free(plain_texts[i]);
     }
   }
 
-  return plain_texts[max_index];
+  int highest_score = plain_text_scores[max_index];
+  free(plain_text_scores);
+  free(key);
+  return highest_score;
 }
