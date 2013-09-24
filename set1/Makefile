@@ -14,7 +14,10 @@ search-single-char-xor: search-single-char-xor.c utils.o
 find-single-char-xor-string: find-single-char-xor-string.c utils.o
 	clang -g utils.o find-single-char-xor-string.c -o find-single-char-xor-string
 
-all: hextob64 xor search-single-char-xor find-single-char-xor-string
+encrypt-xor: encrypt-xor.c utils.o
+	clang utils.o encrypt-xor.c -o encrypt-xor
+
+all: hextob64 xor search-single-char-xor find-single-char-xor-string encrypt-xor
 
 clean: 
 	rm *.o hextob64 xor

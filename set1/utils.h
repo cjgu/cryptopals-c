@@ -15,3 +15,5 @@ int score_plain_text(uint8_t *plain_text, int len);
 void fill_key(uint8_t key_char, uint8_t *key, int len);
 
 int search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text);
+
+void repeat_key(char *key, int key_len, uint8_t **repeated_key, int repeated_key_len);

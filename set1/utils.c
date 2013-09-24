@@ -166,6 +166,21 @@ fill_key(uint8_t key_char, uint8_t *key, int len)
   }
 }
 
+void
+repeat_key(char *key, int key_len, uint8_t **repeated_key, int repeated_key_len)
+{
+  assert(key_len <= repeated_key_len);
+  (*repeated_key) = calloc(repeated_key_len, sizeof(uint8_t));
+
+  for(int i = 0; i < repeated_key_len; i+= key_len)
+  {
+    int n =  (i + key_len) <= repeated_key_len ? key_len : repeated_key_len - i;
+
+    memcpy((*repeated_key)+i, key, n);
+  }
+
+}
+
 /*
  * Returns highest scoring plaintext
  */
@@ -207,5 +222,6 @@ search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text)
   int highest_score = plain_text_scores[max_index];
   free(plain_text_scores);
   free(key);
+
   return highest_score;
 }
