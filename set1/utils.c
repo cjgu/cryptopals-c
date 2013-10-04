@@ -1,3 +1,6 @@
+#include <assert.h>
+#include <stdio.h>
+
 #include "utils.h"
 
 /**
@@ -10,7 +13,7 @@ decode_hex(char *hex_str, uint8_t **bytes)
 
   assert(len % 2 == 0);
 
-  *bytes = calloc(len/2, sizeof(uint8_t));
+  (*bytes) = calloc(len/2, sizeof(uint8_t));
 
   uint8_t prev;
   for (int i = 0; i < len; i++)
@@ -31,7 +34,7 @@ decode_hex(char *hex_str, uint8_t **bytes)
     else {
       /* Invalid hex string */
       free(*bytes);
-      return 0;
+      return -1;
     }
 
     if(i % 2 == 0){
@@ -74,6 +77,79 @@ static char b64_map[] = {
   '3', '4', '5', '6', '7',
   '8', '9', '+', '/'
 };
+
+int
+decode_b64(char *b64_str, uint8_t **bytes)
+{
+
+  int len = strlen(b64_str);
+
+  assert(len % 4 == 0);
+
+  int buf_len =  3 * len/4;
+  (*bytes) = calloc(buf_len, sizeof(uint8_t));
+  uint8_t * buf = *bytes;
+  int buf_pos = 0;
+
+  for (int i = 0; i < len; i+=4)
+  {
+    uint8_t c[4];
+
+    for (int j = 0; j < 4; j++) {
+      char cur = b64_str[i+j];
+
+      if (cur >= 'A' && cur <= 'Z')
+      {
+        c[j] = cur - 'A';
+      }
+      else if (cur >= 'a' && cur <= 'z')
+      {
+        c[j] = cur - 'a' + 26;
+      }
+      else if (cur >= '0' && cur <= '9')
+      {
+        c[j] = cur - '0' + 26*2;
+      }
+      else if (cur == '+')
+      {
+        c[j] = 62;
+      }
+      else if (cur == '/')
+      {
+        c[j] = 63;
+      }
+      else if (cur == '=')
+      {
+        c[j] = 0xFF;
+      }
+      else {
+        printf("unknown char at %d: 0x%x\n", i+j, cur);
+        assert(0);
+      }
+    }
+
+    uint8_t u[3];
+    int byte_count = 0;
+    u[0] = (c[0] << 2) | ((c[1] & 0x30) >> 4);
+    byte_count++;
+    if (c[2] != 0xFF)
+    {
+      u[1] = ((c[1] & 0x0F) << 4) | ((c[2] >> 2) & 0xF);
+      byte_count++;
+
+      if (c[3] != 0xFF)
+      {
+        u[2] = ((c[2] & 0x03) << 6) | (0x3F & c[3]);
+        byte_count++;
+      }
+    }
+
+    memcpy((void *)&buf[buf_pos], (void *)&u, byte_count);
+    buf_pos += byte_count;
+  }
+
+  return buf_pos;
+}
 
 char *
 encode_b64(uint8_t *bytes, int len)
@@ -124,6 +200,8 @@ encode_b64(uint8_t *bytes, int len)
 
   return b64;
 }
+
+
 
 void
 xor(uint8_t *in1, uint8_t *in2, int len, uint8_t **out)
@@ -224,4 +302,81 @@ search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text)
   free(key);
 
   return highest_score;
+}
+
+int
+hamming_distance(uint8_t *buf_1, uint8_t *buf_2, int len)
+{
+  uint8_t *res;
+  xor(buf_1, buf_2, len, &res);
+
+  int dist = 0;
+
+  // Count the number of set bits per byte
+  for (int i = 0; i < len; i++)
+  {
+    uint8_t val = res[i];
+
+    while(val)
+    {
+      ++dist;
+      val &= val - 1;
+    }
+  }
+
+  free(res);
+
+  return dist;
+}
+
+
+int
+load_file(char *file_path, uint8_t **buffer)
+{
+  ssize_t linelen = 0;
+  size_t linecap = 0;
+  char *line = NULL;
+
+  int buf_len = 1024;
+  (*buffer) = malloc(buf_len*sizeof(uint8_t));
+  uint8_t *buf = (*buffer);
+  int pos = 0;
+
+  FILE *fd;
+
+  fd = fopen(file_path, "r");
+
+  while ((linelen = getline(&line, &linecap, fd)) > 0)
+  {
+    if (line[linelen-1] == '\n'){
+      line[linelen-1] = '\0';
+    }
+    uint8_t *crypto_text = NULL;
+    int len = decode_b64(line,  &crypto_text);
+    if (len <= 0){
+      printf("Invalid hex string in '%s'\n", line);
+      free(line);
+      fclose(fd);
+      return -1;
+    }
+
+    if (len + pos > buf_len)
+    {
+      // realloc
+      (*buffer) = realloc(*buffer, buf_len + 1024);
+      buf_len += 1024;
+      printf("Reallocing to %d\n", buf_len);
+    }
+
+    printf("copy %d bytes to pos %d\n", len, pos);
+    memcpy(&buf[pos], crypto_text, len);
+    pos += len;
+
+    free(crypto_text);
+    crypto_text = 0;
+    free(line);
+    line = NULL;
+  }
+  fclose(fd);
+  return pos;
 }
