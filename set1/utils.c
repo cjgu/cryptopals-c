@@ -202,7 +202,6 @@ encode_b64(uint8_t *bytes, int len)
 }
 
 
-
 void
 xor(uint8_t *in1, uint8_t *in2, int len, uint8_t **out)
 {
@@ -225,9 +224,15 @@ score_plain_text(uint8_t *plain_text, int len)
   int sum = 0;
   for(int i = 'a'; i <= 'z'; i++)
     sum += freqs[i];
+  for(int i = '0'; i <= '9'; i++)
+    sum += freqs[i];
   for(int i = 'A'; i <= 'Z'; i++)
     sum += freqs[i];
+  sum += freqs['\''];
   sum += freqs[' '];
+  sum += freqs['\n'];
+  sum += freqs['-'];
+  sum += freqs[':'];
 
   return sum;
 }
@@ -245,7 +250,7 @@ fill_key(uint8_t key_char, uint8_t *key, int len)
 }
 
 void
-repeat_key(char *key, int key_len, uint8_t **repeated_key, int repeated_key_len)
+repeat_key(uint8_t *key, int key_len, uint8_t **repeated_key, int repeated_key_len)
 {
   assert(key_len <= repeated_key_len);
   (*repeated_key) = calloc(repeated_key_len, sizeof(uint8_t));
@@ -263,7 +268,7 @@ repeat_key(char *key, int key_len, uint8_t **repeated_key, int repeated_key_len)
  * Returns highest scoring plaintext
  */
 int
-search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text)
+search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text, uint8_t *max_score_key)
 {
   uint8_t *key = calloc(len, sizeof(uint8_t));
 
@@ -284,7 +289,7 @@ search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text)
   int max = 0;
   for (uint8_t i = 0; i < 0xFF; i++)
   {
-    if(plain_text_scores[i] > max){
+    if(plain_text_scores[i] >= max){
       max = plain_text_scores[i];
       max_index = i;
     }
@@ -298,6 +303,7 @@ search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text)
   }
 
   int highest_score = plain_text_scores[max_index];
+  *max_score_key = max_index;
   free(plain_text_scores);
   free(key);
 
@@ -365,10 +371,8 @@ load_file(char *file_path, uint8_t **buffer)
       // realloc
       (*buffer) = realloc(*buffer, buf_len + 1024);
       buf_len += 1024;
-      printf("Reallocing to %d\n", buf_len);
     }
 
-    printf("copy %d bytes to pos %d\n", len, pos);
     memcpy(&buf[pos], crypto_text, len);
     pos += len;
 
@@ -379,4 +383,49 @@ load_file(char *file_path, uint8_t **buffer)
   }
   fclose(fd);
   return pos;
+}
+
+
+uint8_t *
+break_repeating_key(int key_size, uint8_t *crypto_text, int len)
+{
+  // Transpose blocks of length key_size
+  uint8_t **blocks = calloc(key_size, sizeof(uint8_t *));
+  int *blocks_len = calloc(key_size, sizeof(int));
+  for (int i = 0; i < key_size; i++)
+  {
+    blocks[i] = calloc(len/key_size+1, sizeof(uint8_t));
+    int pos = 0;
+    for (int j = i; j < len; j+=key_size, pos++)
+    {
+      blocks[i][pos] = crypto_text[j];
+    }
+    blocks_len[i] = pos;
+  }
+
+  uint8_t *key = calloc(key_size, sizeof(uint8_t));
+  for (int i = 0; i < key_size; i++)
+  {
+    uint8_t *plaintext;
+    int score = search_single_char_xor_key(blocks[i], blocks_len[i], &plaintext, &key[i]);
+    //printf("Key %d: 0x%X = '%c' score: %d\n", i, key[i], key[i], score);
+
+  }
+
+  for (int i = 0; i < key_size; i++)
+  {
+    free(blocks[i]);
+  }
+  free(blocks);
+  free(blocks_len);
+
+  return key;
+}
+
+void print_buffer(uint8_t *buffer, int len)
+{
+  for (int i = 0; i < len; i++){
+    putchar(buffer[i]);
+  }
+  putchar('\n');
 }

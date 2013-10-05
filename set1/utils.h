@@ -14,10 +14,14 @@ int score_plain_text(uint8_t *plain_text, int len);
 
 void fill_key(uint8_t key_char, uint8_t *key, int len);
 
-int search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text);
+int search_single_char_xor_key(uint8_t *crypto_text, int len, uint8_t **plain_text, uint8_t *key);
 
-void repeat_key(char *key, int key_len, uint8_t **repeated_key, int repeated_key_len);
+void repeat_key(uint8_t *key, int key_len, uint8_t **repeated_key, int repeated_key_len);
 
 int hamming_distance(uint8_t *buf_1, uint8_t *buf_2, int len);
 
 int load_file(char *file_path, uint8_t **buffer);
+
+uint8_t * break_repeating_key(int key_size, uint8_t *crypto_text, int len);
+
+void print_buffer(uint8_t *buffer, int len);

@@ -41,7 +41,8 @@ main(int argc, char *argv[])
     int len = decode_hex(line, &crypto_text);
 
     uint8_t *plaintext;
-    int score = search_single_char_xor_key(crypto_text, len, &plaintext);
+    uint8_t key;
+    int score = search_single_char_xor_key(crypto_text, len, &plaintext, &key);
 
     if (score > max_score)
     {
