@@ -25,3 +25,4 @@ int load_file(char *file_path, uint8_t **buffer);
 uint8_t * break_repeating_key(int key_size, uint8_t *crypto_text, int len);
 
 void print_buffer(uint8_t *buffer, int len);
+void print_hex_buffer(uint8_t *buffer, int len);

@@ -345,7 +345,6 @@ load_file(char *file_path, uint8_t **buffer)
 
   int buf_len = 1024;
   (*buffer) = malloc(buf_len*sizeof(uint8_t));
-  uint8_t *buf = (*buffer);
   int pos = 0;
 
   FILE *fd;
@@ -359,6 +358,7 @@ load_file(char *file_path, uint8_t **buffer)
     }
     uint8_t *crypto_text = NULL;
     int len = decode_b64(line,  &crypto_text);
+
     if (len <= 0){
       printf("Invalid hex string in '%s'\n", line);
       free(line);
@@ -373,13 +373,14 @@ load_file(char *file_path, uint8_t **buffer)
       buf_len += 1024;
     }
 
-    memcpy(&buf[pos], crypto_text, len);
+    memcpy(&((*buffer)[pos]), crypto_text, len);
     pos += len;
 
     free(crypto_text);
     crypto_text = 0;
     free(line);
     line = NULL;
+    linelen = 0;
   }
   fclose(fd);
   return pos;
@@ -420,6 +421,17 @@ break_repeating_key(int key_size, uint8_t *crypto_text, int len)
   free(blocks_len);
 
   return key;
+}
+
+void print_hex_buffer(uint8_t *buffer, int len)
+{
+  printf("Buffer length: %d\n", len);
+  for (int i = 0; i < len; i++){
+    printf("0x%2X ", buffer[i]);
+    if ((i+1) % 8 == 0 && i > 0)
+      printf("\n");
+  }
+  putchar('\n');
 }
 
 void print_buffer(uint8_t *buffer, int len)
