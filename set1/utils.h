@@ -20,7 +20,7 @@ void repeat_key(uint8_t *key, int key_len, uint8_t **repeated_key, int repeated_
 
 int hamming_distance(uint8_t *buf_1, uint8_t *buf_2, int len);
 
-int load_file(char *file_path, uint8_t **buffer);
+int load_file(char *file_path, uint8_t **buffer, int (*decode)(char *, uint8_t **));
 
 uint8_t * break_repeating_key(int key_size, uint8_t *crypto_text, int len);
 

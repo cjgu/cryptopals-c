@@ -10,19 +10,17 @@ int
 main(int argc, char *argv[])
 {
   if (argc != 3){
-    printf("usage: encrypt-xor <plain text> <key>\n");
+    printf("usage: encrypt-xor <plain text file> <key>\n");
     exit(-1);
   }
-
-  int plaintext_len = strlen(argv[1]);
-  uint8_t *plaintext = calloc(plaintext_len, sizeof(uint8_t));
-  memcpy(plaintext, argv[1], plaintext_len);
+  uint8_t *plaintext;
+  int plaintext_len = load_file(argv[1], &plaintext, NULL);
 
   int key_len = strlen(argv[2]);
   assert(key_len <= plaintext_len);
 
   uint8_t *key;
-  repeat_key(argv[2], key_len, &key, plaintext_len);
+  repeat_key((uint8_t *)argv[2], key_len, &key, plaintext_len);
 
   uint8_t *crypto_text;
   xor(plaintext, key, plaintext_len, &crypto_text);

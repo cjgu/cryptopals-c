@@ -16,7 +16,7 @@ main(int argc, char *argv[])
 
 
   uint8_t *buffer;
-  int buf_len = load_file(argv[1], &buffer);
+  int buf_len = load_file(argv[1], &buffer, &decode_b64);
 
   // Figure ut KEYSIZE
   float min_norm_dist = 100;

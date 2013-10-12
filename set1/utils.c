@@ -337,7 +337,7 @@ hamming_distance(uint8_t *buf_1, uint8_t *buf_2, int len)
 
 
 int
-load_file(char *file_path, uint8_t **buffer)
+load_file(char *file_path, uint8_t **buffer, int (*decode)(char *, uint8_t **))
 {
   ssize_t linelen = 0;
   size_t linecap = 0;
@@ -357,13 +357,20 @@ load_file(char *file_path, uint8_t **buffer)
       line[linelen-1] = '\0';
     }
     uint8_t *crypto_text = NULL;
-    int len = decode_b64(line,  &crypto_text);
+    int len;
+    if (decode != NULL) {
+      len = (*decode)(line,  &crypto_text);
 
-    if (len <= 0){
-      printf("Invalid hex string in '%s'\n", line);
-      free(line);
-      fclose(fd);
-      return -1;
+      if (len <= 0){
+        printf("Invalid string in '%s'\n", line);
+        free(line);
+        fclose(fd);
+        return -1;
+      }
+    }
+    else {
+      len = linelen;
+      crypto_text = (uint8_t *)line;
     }
 
     if (len + pos > buf_len)
@@ -376,8 +383,11 @@ load_file(char *file_path, uint8_t **buffer)
     memcpy(&((*buffer)[pos]), crypto_text, len);
     pos += len;
 
-    free(crypto_text);
-    crypto_text = 0;
+    if (decode != NULL)
+    {
+      free(crypto_text);
+      crypto_text = NULL;
+    }
     free(line);
     line = NULL;
     linelen = 0;

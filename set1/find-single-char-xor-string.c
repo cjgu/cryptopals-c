@@ -11,7 +11,7 @@ int
 main(int argc, char *argv[])
 {
   if (argc != 2){
-     printf("Usage: ...\n");
+     printf("Usage: find-single-char-xor-string <file>\n");
      exit(-1);
   }
 
@@ -61,7 +61,6 @@ main(int argc, char *argv[])
     line = NULL;
   }
 
-  printf("Max score %d\n", max_score);
   printf("Plaintext: %s\n", max_plain_text);
 
   return 0;
